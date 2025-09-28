@@ -70,11 +70,10 @@ const TheNextSection: React.FC = () => {
                         margin: 0,
                     }}
                 >
-                    Small businesses across industries use <span style={{ fontWeight: "bold", color:
-                        "#0066FF" }}>4Serve</span>{" "} to connect with<br />
+                    Small businesses across industries use <span style={{ fontWeight: "bold", color: "#0066FF" }}>4Serve</span>{" "}
+                    to connect with<br />
                     customers at the perfect moment.
                 </p>
-s
             </div>
 
             {/* Phones */}
@@ -110,60 +109,63 @@ s
 
             {/* Responsive Styles */}
             <style>{`
-        /* Extra space between title and text on smaller breakpoints */
-        @media (max-width: 1024px) {
-          .section-text-block {
-            margin-top: clamp(40px, 6vw, 60px);
-          }
-        }
+                /* Tablet: 2x2 layout */
+                @media (max-width: 1024px) {
+                    .phones-container {
+                        justify-content: space-around;
+                    }
 
-        @media (max-width: 768px) {
-          .section-text-block {
-            margin-top: clamp(50px, 8vw, 80px);
-          }
+                    .phone-img {
+                        width: 140px;
+                        height: 280px;
+                    }
+                }
 
-          #next-section p {
-            font-size: clamp(1rem, 2.2vw, 1.2rem);
-          }
-        }
+                /* Mobile: horizontal scroll carousel */
+                @media (max-width: 768px) {
+                    .phones-container {
+                        display: flex;
+                        overflow-x: auto;
+                        gap: 12px;
+                        padding-bottom: 8px;
+                        scroll-snap-type: x mandatory;
+                    }
 
-        /* Responsive phone layout */
-        @media (max-width: 1024px) {
-          .phones-container {
-            justify-content: space-around;
-          }
+                    .phone-img {
+                        flex: 0 0 auto;
+                        width: 120px;
+                        height: 240px;
+                        scroll-snap-align: start;
+                    }
 
-          .phone-img {
-            width: 140px;
-            height: 280px;
-          }
-        }
+                    /* Optional: hide scrollbar */
+                    .phones-container::-webkit-scrollbar {
+                        display: none;
+                    }
+                    .phones-container {
+                        -ms-overflow-style: none;
+                        scrollbar-width: none;
+                    }
+                }
 
-        @media (max-width: 768px) {
-          .phones-container {
-            justify-content: center;
-            gap: 16px;
-          }
-
-          .phone-img {
-            width: 120px;
-            height: 240px;
-          }
-        }
-
-        @media (max-width: 500px) {
-          .phones-container {
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 12px;
-          }
-
-          .phone-img {
-            width: 100px;
-            height: 200px;
-          }
-        }
-      `}</style>
+                /* Extra spacing for title/text on smaller screens */
+                @media (max-width: 1024px) {
+                    .section-text-block {
+                        margin-top: clamp(40px, 6vw, 60px);
+                    }
+                }
+                @media (max-width: 768px) {
+                    .section-text-block {
+                        margin-top: clamp(50px, 8vw, 80px);
+                    }
+                }
+                @media (max-width: 500px) {
+                    .phone-img {
+                        width: 100px;
+                        height: 200px;
+                    }
+                }
+            `}</style>
         </section>
     );
 };
