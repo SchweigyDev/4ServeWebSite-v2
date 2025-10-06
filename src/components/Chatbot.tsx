@@ -54,7 +54,7 @@ const ChatbotButton = () => {
         height: "40px",
         width: "auto",
         opacity: 0.25,
-        pointerEvents: "none",
+        pointerEvents: "none" as React.CSSProperties["pointerEvents"], // <-- fixed type
     };
 
     return (
@@ -65,7 +65,7 @@ const ChatbotButton = () => {
                 style={{
                     position: "fixed",
                     bottom: "30px",
-                    right: "30px", // stays the same, doesn’t move
+                    right: "30px",
                     width: "60px",
                     height: "60px",
                     borderRadius: "50%",
