@@ -1,9 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import phone1 from "../assets/images/4ServeLogoStandAlone.jpg";
 import phone2 from "../assets/images/4ServeLogoStandAlone.jpg";
 import phone3 from "../assets/images/4ServeLogoStandAlone.jpg";
 
 const TheUserSide: React.FC = () => {
+    const [activePhone, setActivePhone] = useState<string | null>(null);
+
+    const phones = [
+        { src: phone1, alt: "Phone 1" },
+        { src: phone2, alt: "Phone 2" },
+        { src: phone3, alt: "Phone 3" },
+    ];
+
     return (
         <section
             id="user-side-section"
@@ -152,7 +160,7 @@ const TheUserSide: React.FC = () => {
                         flexDirection: "column",
                         alignItems: "center",
                         position: "relative",
-                        height: "540px", // increased for larger phones
+                        height: "540px",
                     }}
                 >
                     {/* Bottom Phones */}
@@ -167,36 +175,29 @@ const TheUserSide: React.FC = () => {
                             width: "100%",
                         }}
                     >
-                        <img
-                            src={phone1}
-                            alt="Phone 1"
-                            style={{
-                                width: "180px",
-                                height: "360px",
-                                borderRadius: "20px",
-                                objectFit: "cover",
-                                boxShadow: "0 8px 20px rgba(0,0,0,0.4)",
-                                border: "4px solid #0066FF",
-                            }}
-                        />
-                        <img
-                            src={phone2}
-                            alt="Phone 2"
-                            style={{
-                                width: "180px",
-                                height: "360px",
-                                borderRadius: "20px",
-                                objectFit: "cover",
-                                boxShadow: "0 8px 20px rgba(0,0,0,0.4)",
-                                border: "4px solid #0066FF",
-                            }}
-                        />
+                        {phones.slice(0, 2).map((phone, i) => (
+                            <img
+                                key={i}
+                                src={phone.src}
+                                alt={phone.alt}
+                                style={{
+                                    width: "180px",
+                                    height: "360px",
+                                    borderRadius: "20px",
+                                    objectFit: "cover",
+                                    boxShadow: "0 8px 20px rgba(0,0,0,0.4)",
+                                    border: "4px solid #0066FF",
+                                    cursor: "pointer",
+                                }}
+                                onClick={() => setActivePhone(phone.src)}
+                            />
+                        ))}
                     </div>
 
                     {/* Top Phone */}
                     <img
-                        src={phone3}
-                        alt="Phone 3"
+                        src={phones[2].src}
+                        alt={phones[2].alt}
                         className="top-phone"
                         style={{
                             width: "200px",
@@ -208,17 +209,50 @@ const TheUserSide: React.FC = () => {
                             position: "absolute",
                             bottom: "200px",
                             zIndex: 2,
+                            cursor: "pointer",
                         }}
+                        onClick={() => setActivePhone(phones[2].src)}
                     />
                 </div>
             </div>
+
+            {/* Modal for phone */}
+            {activePhone && (
+                <div
+                    onClick={() => setActivePhone(null)}
+                    style={{
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        width: "100vw",
+                        height: "100vh",
+                        background: "rgba(0,0,0,0.7)",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        zIndex: 1000,
+                        cursor: "pointer",
+                    }}
+                >
+                    <img
+                        src={activePhone}
+                        alt="Enlarged Phone"
+                        style={{
+                            maxWidth: "90%",
+                            maxHeight: "90%",
+                            borderRadius: "20px",
+                            boxShadow: "0 12px 40px rgba(0,0,0,0.6)",
+                        }}
+                    />
+                </div>
+            )}
 
             {/* Responsive Styles */}
             <style>{`
         /* Medium-Large screens before stacking */
         @media (max-width: 1400px) {
           .user-text-block {
-            margin-right: clamp(40px, 6vw, 80px); /* pushes text away from phones */
+            margin-right: clamp(40px, 6vw, 80px);
           }
         }
 
@@ -226,10 +260,10 @@ const TheUserSide: React.FC = () => {
         @media (max-width: 1024px) {
           .user-text-block {
             margin-top: clamp(20px, 5vw, 40px);
-            margin-right: 0; /* reset margin for stacked layout */
+            margin-right: 0;
           }
           .user-phones-block {
-            margin-top: 30px; 
+            margin-top: 30px;
           }
         }
 

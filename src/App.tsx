@@ -1,30 +1,37 @@
 // App.tsx
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
-import WhatsBroken from "./components/WhatsBroken.tsx";
-import TheSolution from "./components/TheSolution.tsx";
-import UserCases from "./components/UserCases.tsx";
-import TheUserSide from "./components/TheUserSide.tsx";
-import HowItWorks from "./components/HowItWorks.tsx";
-import CTA from "./components/CTA.tsx";
-import Footer from "./components/Footer.tsx";
-import ScrollToTop from "./components/ScrollToTop.tsx";
+import WhatsBroken from "./components/WhatsBroken";
+import TheSolution from "./components/TheSolution";
+import UserCases from "./components/UserCases";
+import TheUserSide from "./components/TheUserSide";
+import HowItWorks from "./components/HowItWorks";
+import CTA from "./components/CTA";
+import Footer from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop";
+import ChatbotButton from "./components/Chatbot";
 
 function App() {
     return (
-        <div className="App" style={{ fontFamily: "sans-serif", color: "#fff", background: "#111" }}>
+        <div
+            className="App"
+            style={{
+                fontFamily: "sans-serif",
+                color: "#fff",
+                background: "#111",
+            }}
+        >
             <Navbar />
             <Hero />
-
             <WhatsBroken />
             <TheSolution />
             <HowItWorks />
             <TheUserSide />
             <UserCases />
             <CTA />
-
             <Footer />
             <ScrollToTop />
+            <ChatbotButton />
         </div>
     );
 }

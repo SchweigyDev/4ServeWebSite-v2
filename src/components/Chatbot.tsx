@@ -1,46 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { FaCommentDots, FaTimes } from "react-icons/fa";
+import newLogo from "../assets/images/4ServeLogoStandAlone.jpg";
 
-interface ChatbotProps {
-    embedded?: boolean;
-}
-
-const sampleMessages = [
-    "Hello! How can I help your business today?",
-    "We build AI-integrated websites and smart tools.",
-    "Chatbots, blog responders, and automation included!",
-];
-
-const Chatbot = ({ embedded = false }: ChatbotProps) => {
+const ChatbotButton = () => {
     const [open, setOpen] = useState(false);
-    const [displayedMessages, setDisplayedMessages] = useState<string[]>([]);
-
-    useEffect(() => {
-        if (embedded) {
-            let index = 0;
-            const interval = setInterval(() => {
-                setDisplayedMessages((prev) => [...prev, sampleMessages[index]]);
-                index++;
-                if (index >= sampleMessages.length) clearInterval(interval);
-            }, 1000);
-            return () => clearInterval(interval);
-        }
-    }, [embedded]);
 
     const chatBoxStyle = {
-        width: "500px",        // keep wide layout
+        width: "400px",
         maxWidth: "90vw",
-        height: "280px",       // shorter height
-        background: "rgba(17,17,17,0.9)",
-        backdropFilter: "blur(10px)",
+        height: "300px",
+        backgroundColor: "rgba(0, 0, 51, 0.85)",
         borderRadius: "16px",
         padding: "16px",
-        boxShadow: "0 8px 30px rgba(0,0,0,0.4)",
+        boxShadow: "0 0 25px rgba(0,212,255,0.5)",
         display: "flex",
         flexDirection: "column" as "column",
-        color: "#ddd",
-        transform: "translateX(100%)",
-        animation: "slideIn 0.8s forwards",
+        color: "#fff",
+        position: "fixed" as "fixed",
+        bottom: "100px",
+        right: "30px",
+        zIndex: 150,
+        transform: open ? "translateX(0)" : "translateX(110%)",
+        transition: "transform 0.4s ease",
+        overflow: "hidden",
+        backdropFilter: "blur(6px)",
+        border: "1px solid rgba(0,212,255,0.3)",
     };
 
     const messagesContainerStyle = {
@@ -48,76 +32,44 @@ const Chatbot = ({ embedded = false }: ChatbotProps) => {
         overflowY: "auto" as "auto",
         display: "flex",
         flexDirection: "column" as "column",
-        gap: "5px",            // less space between messages
-        marginBottom: "6px",   // tight gap above input
+        gap: "6px",
+        marginBottom: "6px",
     };
 
     const inputStyle = {
         padding: "10px 12px",
-        borderRadius: "10px",  // sharper input
+        borderRadius: "10px",
         border: "none",
         outline: "none",
         width: "100%",
         boxSizing: "border-box" as "border-box",
+        background: "rgba(255,255,255,0.1)",
+        color: "#fff",
     };
 
-    if (embedded) {
-        return (
-            <div style={chatBoxStyle}>
-                <div style={{ fontWeight: "bold", fontSize: "1.2rem", marginBottom: "8px" }}>
-                    Rivon AI Chat
-                </div>
-                <div style={messagesContainerStyle}>
-                    {displayedMessages.map((msg, i) => (
-                        <div
-                            key={i}
-                            style={{
-                                background: i % 2 === 0 ? "#6A00F5" : "rgba(255,255,255,0.08)",
-                                color: i % 2 === 0 ? "#fff" : "#ddd",
-                                padding: "6px 10px",
-                                borderRadius: "6px",  // sharper bubbles
-                                fontSize: "0.9rem",
-                                maxWidth: "80%",
-                                alignSelf: i % 2 === 0 ? "flex-start" : "flex-end",
-                                border: i % 2 !== 0 ? "1px solid #6A00F5" : "none",
-                                animation: `fadeSlide 0.4s ease forwards`,
-                            }}
-                        >
-                            {msg || "…"}
-                        </div>
-                    ))}
-                </div>
-                <input type="text" placeholder="Type your message..." style={inputStyle} />
+    const logoStyle = {
+        position: "absolute" as "absolute",
+        top: "10px",
+        right: "10px",
+        height: "40px",
+        width: "auto",
+        opacity: 0.25,
+        pointerEvents: "none",
+    };
 
-                <style>
-                    {`
-                    @keyframes slideIn {
-                        from { transform: translateX(100%); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                    @keyframes fadeSlide {
-                        from { opacity: 0; transform: translateX(20px); }
-                        to { opacity: 1; transform: translateX(0); }
-                    }
-                `}
-                </style>
-            </div>
-        );
-    }
-
-    // Floating chat button
     return (
         <>
+            {/* Floating Chat Button */}
             <button
                 onClick={() => setOpen(!open)}
                 style={{
                     position: "fixed",
                     bottom: "30px",
-                    right: "30px",
+                    right: "30px", // stays the same, doesn’t move
                     width: "60px",
                     height: "60px",
                     borderRadius: "50%",
-                    background: "linear-gradient(135deg, #6A00F5, #00D4FF)",
+                    background: "linear-gradient(135deg, #003366, #00D4FF)",
                     border: "none",
                     color: "white",
                     fontSize: "1.5rem",
@@ -132,40 +84,50 @@ const Chatbot = ({ embedded = false }: ChatbotProps) => {
                 {open ? <FaTimes /> : <FaCommentDots />}
             </button>
 
-            {open && (
+            {/* Chat Box */}
+            <div style={chatBoxStyle}>
+                {/* Logo in corner */}
+                <img src={newLogo} alt="4Serve Logo" style={logoStyle} />
+
+                {/* Header */}
                 <div
                     style={{
-                        ...chatBoxStyle,
-                        transform: "translateX(0)", // fully visible
-                        position: "fixed",
-                        bottom: "100px",
-                        right: "30px",
-                        zIndex: 150,
+                        fontWeight: 700,
+                        fontSize: "1.2rem",
+                        marginBottom: "12px",
+                        zIndex: 1,
                     }}
                 >
-                    <div style={{ fontWeight: "bold", fontSize: "1.2rem", marginBottom: "8px" }}>
-                        Rivon AI Chat
-                    </div>
-                    <div style={messagesContainerStyle}>
-                        <div
-                            style={{
-                                background: "#6A00F5",
-                                color: "#fff",
-                                padding: "6px 10px",
-                                borderRadius: "6px",
-                                fontSize: "0.9rem",
-                                maxWidth: "80%",
-                                alignSelf: "flex-start",
-                            }}
-                        >
-                            Hello! How can I help your business today?
-                        </div>
-                    </div>
-                    <input type="text" placeholder="Type your message..." style={inputStyle} />
+                    4Serve Chat
                 </div>
-            )}
+
+                {/* Messages */}
+                <div style={messagesContainerStyle}>
+                    <div
+                        style={{
+                            background: "rgba(0, 102, 255, 0.2)",
+                            color: "#fff",
+                            padding: "6px 10px",
+                            borderRadius: "8px",
+                            fontSize: "0.9rem",
+                            maxWidth: "80%",
+                            alignSelf: "flex-start",
+                            backdropFilter: "blur(2px)",
+                        }}
+                    >
+                        Hello! How can I help your business today?
+                    </div>
+                </div>
+
+                {/* Input */}
+                <input
+                    type="text"
+                    placeholder="Type your message..."
+                    style={inputStyle}
+                />
+            </div>
         </>
     );
 };
 
-export default Chatbot;
+export default ChatbotButton;

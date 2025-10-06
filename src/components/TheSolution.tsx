@@ -112,7 +112,7 @@ const SolutionPage = () => {
                     style={{
                         fontSize: "1.15rem",
                         fontWeight: "400",
-                        margin: "10px 0 0 0", // added more spacing from Section 1
+                        margin: "10px 0 0 0",
                         paddingLeft: "0",
                     }}
                 >
@@ -177,45 +177,51 @@ const SolutionPage = () => {
                         max-width: 100%;
                     }
 
-                    /* Center all text sections on mobile */
+                    /* Center text sections */
                     #solution-section div:nth-child(3) h2,
-                    #solution-section div:nth-child(3) p,
-                    #solution-section div:nth-child(3) ul {
+                    #solution-section div:nth-child(3) p {
                         padding-left: 0 !important;
                         text-align: center !important;
                         margin-left: 0 !important;
                         transform: none !important;
                     }
 
+                    /* ✅ Bullets aligned vertically + centered as a block */
                     #solution-section div:nth-child(3) ul {
+                        list-style-position: inside;
                         padding-left: 0 !important;
+                        margin: 0 auto !important;
+                        text-align: center !important;
                         display: inline-block;
-                        text-align: left;
-                        margin-left: 0 !important;
                     }
 
-                    /* Section 5 aligned with Sections 2 & 3 */
+                    #solution-section div:nth-child(3) ul li {
+                        text-align: left;
+                        display: list-item;
+                    }
+
+                    /* Section 5 aligned */
                     #solution-section div:nth-child(3) p:last-child {
                         padding-left: 0 !important;
                         margin-left: 0 !important;
                         text-align: center !important;
-                        font-size: 1.15rem !important; /* slightly bigger on mobile */
+                        font-size: 1.15rem !important;
                     }
 
-                    /* Section 1: make title bigger on mobile */
+                    /* Section 1: bigger on mobile */
                     #solution-section div:nth-child(3) h2 {
                         font-size: clamp(2rem, 6vw, 2.8rem) !important;
                         margin-bottom: 10px;
                     }
 
-                    /* Sections 2 & 3: slightly larger on mobile */
+                    /* Sections 2 & 3: slightly larger */
                     #solution-section div:nth-child(3) p:nth-child(2),
                     #solution-section div:nth-child(3) p:nth-child(3) {
                         font-size: 1.25rem !important;
                     }
                 }
 
-                /* Medium screens: shrink Section 1 to fit instead of wrapping */
+                /* Medium screens: shrink Section 1 to fit */
                 @media (max-width: 1024px) and (min-width: 769px) {
                     #solution-section div:nth-child(3) h2 {
                         font-size: clamp(1rem, 2.2vw, 2rem);

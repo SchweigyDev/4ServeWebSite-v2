@@ -16,20 +16,18 @@ const Navbar = () => {
         { name: "User Cases", target: "user-cases-section" },
     ];
 
-    // Smooth scroll function
     const scrollToSection = (id: string) => {
         const element = document.getElementById(id);
-        if (element) {
-            const offset = 100; // adjust for navbar height
-            const elementPosition = element.offsetTop;
-            const offsetPosition = elementPosition - offset;
-
-            window.scrollTo({
-                top: offsetPosition,
-                behavior: "smooth",
-            });
+        const navbar = document.querySelector("nav");
+        if (element && navbar) {
+            const navbarHeight = navbar.getBoundingClientRect().height; // dynamic height
+            const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+            const offsetPosition = elementPosition - navbarHeight;
+            window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+            setIsOpen(false); // closes mobile menu if open
         }
     };
+
 
     useEffect(() => {
         const handleResize = () => {
@@ -55,7 +53,7 @@ const Navbar = () => {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "6px 16px",
+                padding: "4px 12px",
                 background: "#161618",
                 color: "white",
                 boxShadow: scrolled ? "0 2px 8px rgba(0,0,0,0.4)" : "none",
@@ -68,7 +66,7 @@ const Navbar = () => {
                     src={newLogo}
                     alt="Logo"
                     style={{
-                        height: isMobile ? "40px" : "clamp(40px, 5vw, 60px)",
+                        height: isMobile ? "36px" : "clamp(36px, 5vw, 50px)",
                         width: "auto",
                     }}
                 />
@@ -76,24 +74,26 @@ const Navbar = () => {
 
             {/* Desktop Links */}
             {!isMobile && (
-                <div style={{
-                    flex: 1,
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    gap: "18px",
-                    marginLeft: "40px" // pushes section buttons to the right
-                }}>
+                <div
+                    style={{
+                        flex: 1,
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        gap: "16px",
+                        marginLeft: "30px",
+                    }}
+                >
                     {links.map(link => (
                         <button
                             key={link.name}
                             onClick={() => scrollToSection(link.target)}
                             className="nav-link"
                             style={{
-                                fontSize: "clamp(0.85rem, 1vw, 0.95rem)",
+                                fontSize: "clamp(0.8rem, 0.95vw, 0.9rem)",
                                 background: "none",
                                 border: "none",
-                                cursor: "pointer"
+                                cursor: "pointer",
                             }}
                         >
                             {link.name}
@@ -104,11 +104,19 @@ const Navbar = () => {
 
             {/* Desktop Right Side */}
             {!isMobile && (
-                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                    <a href="#" className="social-icon facebook" style={{ fontSize: "clamp(0.9rem, 1.5vw, 1rem)" }}><FaFacebookF /></a>
-                    <a href="#" className="social-icon twitter" style={{ fontSize: "clamp(0.9rem, 1.5vw, 1rem)" }}><FaTwitter /></a>
-                    <a href="#" className="social-icon instagram" style={{ fontSize: "clamp(0.9rem, 1.5vw, 1rem)" }}><FaInstagram /></a>
-                    <button className="cta-button floating-button" style={{ fontSize: "clamp(0.8rem, 1vw, 0.95rem)", padding: "5px 12px" }}>Dashboard Log-In</button>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <a href="#" className="social-icon facebook" style={{ fontSize: "clamp(0.85rem, 1.2vw, 0.95rem)" }}><FaFacebookF /></a>
+                    <a href="#" className="social-icon twitter" style={{ fontSize: "clamp(0.85rem, 1.2vw, 0.95rem)" }}><FaTwitter /></a>
+                    <a href="#" className="social-icon instagram" style={{ fontSize: "clamp(0.85rem, 1.2vw, 0.95rem)" }}><FaInstagram /></a>
+                    <button
+                        className="cta-button floating-button"
+                        style={{
+                            fontSize: "clamp(0.75rem, 0.9vw, 0.9rem)",
+                            padding: "4px 10px",
+                        }}
+                    >
+                        Dashboard Log-In
+                    </button>
                 </div>
             )}
 
@@ -119,15 +127,15 @@ const Navbar = () => {
                         onClick={() => setIsOpen(!isOpen)}
                         className={`hamburger ${isOpen ? "open" : ""}`}
                         style={{
-                            fontSize: "1.6rem",
+                            fontSize: "1.5rem",
                             color: "white",
                             background: "none",
                             border: "none",
                             cursor: "pointer",
                             zIndex: 110,
                             position: "relative",
-                            width: "28px",
-                            height: "22px",
+                            width: "26px",
+                            height: "20px",
                         }}
                     >
                         <span></span>
@@ -169,15 +177,15 @@ const Navbar = () => {
                         {links.map(link => (
                             <button
                                 key={link.name}
-                                onClick={() => { scrollToSection(link.target); setIsOpen(false); }}
+                                onClick={() => scrollToSection(link.target)}
                                 className="mobile-link"
-                                style={{ fontSize: "0.95rem", background: "none", border: "none", cursor: "pointer" }}
+                                style={{ fontSize: "0.9rem", background: "none", border: "none", cursor: "pointer" }}
                             >
                                 {link.name}
                             </button>
                         ))}
 
-                        <div style={{ display: "flex", justifyContent: "center", padding: "15px", gap: "12px" }}>
+                        <div style={{ display: "flex", justifyContent: "center", padding: "12px", gap: "10px" }}>
                             <a href="#" className="social-icon facebook"><FaFacebookF /></a>
                             <a href="#" className="social-icon twitter"><FaTwitter /></a>
                             <a href="#" className="social-icon instagram"><FaInstagram /></a>
@@ -189,93 +197,93 @@ const Navbar = () => {
 
             {/* Styles */}
             <style>{`
-                html { scroll-behavior: smooth; } /* ✅ smooth scrolling */
+        html { scroll-behavior: smooth; }
 
-                .nav-link {
-                    color: white;
-                    padding: 6px 10px;
-                    border-radius: 6px;
-                    font-weight: 500;
-                    position: relative;
-                    text-decoration: none;
-                    transition: all 0.3s;
-                }
-                .nav-link::after {
-                    content: '';
-                    position: absolute;
-                    width: 0%;
-                    height: 2px;
-                    bottom: 0;
-                    left: 0;
-                    background: linear-gradient(90deg, #6A00F5, #00D4FF);
-                    transition: width 0.3s ease;
-                    border-radius: 1px;
-                }
-                .nav-link:hover::after { width: 100%; }
+        .nav-link {
+          color: white;
+          padding: 5px 8px;
+          border-radius: 6px;
+          font-weight: 500;
+          position: relative;
+          text-decoration: none;
+          transition: all 0.3s;
+        }
+        .nav-link::after {
+          content: '';
+          position: absolute;
+          width: 0%;
+          height: 2px;
+          bottom: 0;
+          left: 0;
+          background: linear-gradient(90deg, #0066FF, #00D4FF);
+          transition: width 0.3s ease;
+          border-radius: 1px;
+        }
+        .nav-link:hover::after { width: 100%; }
 
-                .cta-button {
-                    border-radius: 6px;
-                    background: linear-gradient(90deg, #6A00F5, #00D4FF);
-                    color: white;
-                    font-weight: 500;
-                    cursor: pointer;
-                    border: none;
-                    transition: all 0.3s, box-shadow 0.3s;
-                    box-shadow: 0 0 0 rgba(106, 0, 245, 0);
-                }
-                .cta-button:hover, .floating-button:hover {
-                    transform: scale(1.05);
-                    box-shadow: 0 0 10px #6A00F5, 0 0 15px #00D4FF;
-                }
-                .floating-button {
-                    animation: float 2.5s ease-in-out infinite;
-                }
-                @keyframes float {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-4px); }
-                }
+        .cta-button {
+          border-radius: 6px;
+          background: linear-gradient(90deg, #0066FF, #00D4FF);
+          color: white;
+          font-weight: 500;
+          cursor: pointer;
+          border: none;
+          transition: all 0.3s, box-shadow 0.3s;
+          box-shadow: 0 0 0 rgba(0,102,255,0);
+        }
+        .cta-button:hover, .floating-button:hover {
+          transform: scale(1.05);
+          box-shadow: 0 0 10px #0066FF, 0 0 15px #00D4FF;
+        }
+        .floating-button {
+          animation: float 2.5s ease-in-out infinite;
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
 
-                .social-icon {
-                    color: white;
-                    transition: all 0.3s ease;
-                }
-                .social-icon.facebook:hover { transform: scale(1.2); color: #3b5998; }
-                .social-icon.twitter:hover { transform: scale(1.2); color: #1da1f2; }
-                .social-icon.instagram:hover { transform: scale(1.2); color: #e1306c; }
+        .social-icon {
+          color: white;
+          transition: all 0.3s ease;
+        }
+        .social-icon.facebook:hover { transform: scale(1.2); color: #3b5998; }
+        .social-icon.twitter:hover { transform: scale(1.2); color: #1da1f2; }
+        .social-icon.instagram:hover { transform: scale(1.2); color: #e1306c; }
 
-                .hamburger span {
-                    display: block;
-                    height: 2.5px;
-                    width: 28px;
-                    background: white;
-                    margin: 5px 0;
-                    border-radius: 2px;
-                    transition: all 0.3s ease;
-                }
-                .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(0, 8px); }
-                .hamburger.open span:nth-child(2) { opacity: 0; }
-                .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(0, -8px); }
+        .hamburger span {
+          display: block;
+          height: 2.2px;
+          width: 26px;
+          background: white;
+          margin: 4px 0;
+          border-radius: 2px;
+          transition: all 0.3s ease;
+        }
+        .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(0, 7px); }
+        .hamburger.open span:nth-child(2) { opacity: 0; }
+        .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(0, -7px); }
 
-                .mobile-link {
-                    color: white;
-                    text-decoration: none;
-                    padding: 12px 18px;
-                    position: relative;
-                    transition: all 0.3s ease;
-                }
-                .mobile-link::after {
-                    content: '';
-                    position: absolute;
-                    width: 0%;
-                    height: 2px;
-                    bottom: 0;
-                    left: 0;
-                    background: linear-gradient(90deg, #6A00F5, #00D4FF);
-                    transition: width 0.3s ease;
-                    border-radius: 1px;
-                }
-                .mobile-link:hover::after { width: 100%; }
-            `}</style>
+        .mobile-link {
+          color: white;
+          text-decoration: none;
+          padding: 10px 16px;
+          position: relative;
+          transition: all 0.3s ease;
+        }
+        .mobile-link::after {
+          content: '';
+          position: absolute;
+          width: 0%;
+          height: 2px;
+          bottom: 0;
+          left: 0;
+          background: linear-gradient(90deg, #0066FF, #00D4FF);
+          transition: width 0.3s ease;
+          border-radius: 1px;
+        }
+        .mobile-link:hover::after { width: 100%; }
+      `}</style>
         </nav>
     );
 };
