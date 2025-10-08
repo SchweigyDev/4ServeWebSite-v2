@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { FaFacebookF, FaTwitter, FaInstagram } from "react-icons/fa";
 import Logo from "../assets/images/4ServeLogoStandAlone.jpg";
+import PolicyModal from "./PolicyModal"; // Create this component next
 
 const Footer: React.FC = () => {
+    const [activePolicy, setActivePolicy] = useState<"privacy" | "terms" | "cookies" | null>(null);
+
     const scrollToSection = (id: string) => {
         const element = document.getElementById(id);
         if (element) {
@@ -17,6 +20,13 @@ const Footer: React.FC = () => {
         }
     };
 
+    const handlePolicyClick = (type: "privacy" | "terms" | "cookies") => {
+        scrollToSection(type); // optional scroll first
+        setActivePolicy(type); // then open modal
+    };
+
+    const closePolicy = () => setActivePolicy(null);
+
     return (
         <footer
             style={{
@@ -26,6 +36,7 @@ const Footer: React.FC = () => {
                 fontSize: "1rem",
             }}
         >
+            {/* === LEFT, CENTER, RIGHT === */}
             <div
                 style={{
                     display: "flex",
@@ -61,57 +72,23 @@ const Footer: React.FC = () => {
 
                     <a
                         href="mailto:support@4serve.com"
-                        style={{
-                            display: "block",
-                            margin: "8px 0",
-                            color: "white",
-                            fontSize: "1.1rem",
-                            textDecoration: "none",
-                            transition: "all 0.3s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                            (e.target as HTMLAnchorElement).style.color = "#00D4FF";
-                            (e.target as HTMLAnchorElement).style.textDecoration = "underline";
-                        }}
-                        onMouseLeave={(e) => {
-                            (e.target as HTMLAnchorElement).style.color = "white";
-                            (e.target as HTMLAnchorElement).style.textDecoration = "none";
-                        }}
+                        style={{ display: "block", margin: "8px 0", color: "white", fontSize: "1.1rem", textDecoration: "none", transition: "all 0.3s ease" }}
+                        onMouseEnter={(e) => { (e.target as HTMLAnchorElement).style.color = "#00D4FF"; (e.target as HTMLAnchorElement).style.textDecoration = "underline"; }}
+                        onMouseLeave={(e) => { (e.target as HTMLAnchorElement).style.color = "white"; (e.target as HTMLAnchorElement).style.textDecoration = "none"; }}
                     >
                         support@4serve.com
                     </a>
 
                     <a
                         href="tel:3143842369"
-                        style={{
-                            display: "block",
-                            margin: "8px 0",
-                            color: "white",
-                            fontSize: "1.1rem",
-                            textDecoration: "none",
-                            transition: "all 0.3s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                            (e.target as HTMLAnchorElement).style.color = "#00D4FF";
-                            (e.target as HTMLAnchorElement).style.textDecoration = "underline";
-                        }}
-                        onMouseLeave={(e) => {
-                            (e.target as HTMLAnchorElement).style.color = "white";
-                            (e.target as HTMLAnchorElement).style.textDecoration = "none";
-                        }}
+                        style={{ display: "block", margin: "8px 0", color: "white", fontSize: "1.1rem", textDecoration: "none", transition: "all 0.3s ease" }}
+                        onMouseEnter={(e) => { (e.target as HTMLAnchorElement).style.color = "#00D4FF"; (e.target as HTMLAnchorElement).style.textDecoration = "underline"; }}
+                        onMouseLeave={(e) => { (e.target as HTMLAnchorElement).style.color = "white"; (e.target as HTMLAnchorElement).style.textDecoration = "none"; }}
                     >
                         314-384-2369
                     </a>
 
-                    <div
-                        style={{
-                            marginTop: "22px",
-                            display: "flex",
-                            gap: "18px",
-                            flexWrap: "wrap",
-                            fontSize: "1.4rem",
-                        }}
-                    >
+                    <div style={{ marginTop: "22px", display: "flex", gap: "18px", flexWrap: "wrap", fontSize: "1.4rem" }}>
                         <a href="#" className="social-icon facebook"><FaFacebookF /></a>
                         <a href="#" className="social-icon twitter"><FaTwitter /></a>
                         <a href="#" className="social-icon instagram"><FaInstagram /></a>
@@ -142,9 +119,7 @@ const Footer: React.FC = () => {
 
                 {/* RIGHT */}
                 <div className="footer-right">
-                    <h3 style={{ margin: 0, fontSize: "1.3rem", color: "#00D4FF" }}>
-                        Stay Ahead of Big Tech
-                    </h3>
+                    <h3 style={{ margin: 0, fontSize: "1.3rem", color: "#00D4FF" }}>Stay Ahead of Big Tech</h3>
                     <p style={{ margin: 0, lineHeight: 1.6, fontSize: "1.05rem" }}>
                         Get early access updates and join the movement today.
                     </p>
@@ -153,82 +128,33 @@ const Footer: React.FC = () => {
                         <input
                             type="email"
                             placeholder="Enter your email"
-                            style={{
-                                flex: "1",
-                                padding: "12px",
-                                borderRadius: "8px",
-                                border: "2px solid transparent",
-                                outline: "none",
-                                transition: "all 0.3s ease, box-shadow 0.3s ease",
-                                fontSize: "1rem",
-                            }}
-                            onFocus={(e) => {
-                                e.target.style.border = "2px solid #00D4FF";
-                                e.target.style.boxShadow = "0 0 12px rgba(0, 212, 255, 0.6)";
-                            }}
-                            onBlur={(e) => {
-                                e.target.style.border = "2px solid transparent";
-                                e.target.style.boxShadow = "none";
-                            }}
+                            style={{ flex: "1", padding: "12px", borderRadius: "8px", border: "2px solid transparent", outline: "none", transition: "all 0.3s ease, box-shadow 0.3s ease", fontSize: "1rem" }}
+                            onFocus={(e) => { e.target.style.border = "2px solid #00D4FF"; e.target.style.boxShadow = "0 0 12px rgba(0, 212, 255, 0.6)"; }}
+                            onBlur={(e) => { e.target.style.border = "2px solid transparent"; e.target.style.boxShadow = "none"; }}
                         />
-                        <button
-                            style={{
-                                background: "linear-gradient(135deg, #0066FF, #00D4FF)",
-                                border: "none",
-                                borderRadius: "8px",
-                                padding: "12px 20px",
-                                color: "white",
-                                fontWeight: "bold",
-                                cursor: "pointer",
-                                transition: "all 0.3s ease, box-shadow 0.3s ease",
-                            }}
-                            className="footer-join-button"
-                        >
-                            Join
-                        </button>
+                        <button style={{ background: "linear-gradient(135deg, #0066FF, #00D4FF)", border: "none", borderRadius: "8px", padding: "12px 20px", color: "white", fontWeight: "bold", cursor: "pointer", transition: "all 0.3s ease, box-shadow 0.3s ease" }} className="footer-join-button">Join</button>
                     </div>
 
-                    <button
-                        style={{
-                            marginTop: "10px",
-                            background: "linear-gradient(135deg, #0066FF, #00D4FF)",
-                            border: "none",
-                            borderRadius: "8px",
-                            padding: "14px",
-                            color: "white",
-                            fontWeight: "bold",
-                            cursor: "pointer",
-                            width: "100%",
-                            transition: "all 0.3s ease, box-shadow 0.3s ease",
-                        }}
-                        className="footer-download-button floating-button"
-                    >
+                    <button style={{ marginTop: "10px", background: "linear-gradient(135deg, #0066FF, #00D4FF)", border: "none", borderRadius: "8px", padding: "14px", color: "white", fontWeight: "bold", cursor: "pointer", width: "100%", transition: "all 0.3s ease, box-shadow 0.3s ease" }} className="footer-download-button floating-button">
                         Download the App
                     </button>
                 </div>
             </div>
 
             {/* BOTTOM ROW */}
-            <div
-                style={{
-                    borderTop: "2px solid #333",
-                    paddingTop: "20px",
-                    display: "flex",
-                    flexWrap: "wrap",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: "20px",
-                }}
-            >
+            <div style={{ borderTop: "2px solid #333", paddingTop: "20px", display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "20px" }}>
                 <p style={{ margin: 0, fontSize: "1rem" }}>© 2025 4Serve – Control Where It Belongs</p>
                 <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", fontSize: "1rem" }}>
-                    <button onClick={() => scrollToSection("privacy")} className="footer-bottom-link">Privacy Policy</button>
+                    <button onClick={() => handlePolicyClick("privacy")} className="footer-bottom-link">Privacy Policy</button>
                     <span style={{ color: "#666" }}>•</span>
-                    <button onClick={() => scrollToSection("terms")} className="footer-bottom-link">Terms of Use</button>
+                    <button onClick={() => handlePolicyClick("terms")} className="footer-bottom-link">Terms of Use</button>
                     <span style={{ color: "#666" }}>•</span>
-                    <button onClick={() => scrollToSection("cookies")} className="footer-bottom-link">Cookie Policy</button>
+                    <button onClick={() => handlePolicyClick("cookies")} className="footer-bottom-link">Cookie Policy</button>
                 </div>
             </div>
+
+            {/* MODAL */}
+            <PolicyModal isOpen={!!activePolicy} onClose={closePolicy} policyType={activePolicy || "privacy"} />
 
             <style>{`
                 .footer-center {
