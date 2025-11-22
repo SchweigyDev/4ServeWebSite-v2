@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { FaCommentDots, FaTimes } from "react-icons/fa";
-import newLogo from "../assets/images/4ServeLogoStandAlone.jpg";
+import newLogo from "../assets/imageOrginals/4ServeLogoStandAlone.jpg";
 
 interface Message {
     text: string;

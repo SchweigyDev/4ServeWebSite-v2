@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FaFacebookF, FaTwitter, FaInstagram } from "react-icons/fa";
-import Logo from "../assets/images/4ServeLogoStandAlone.jpg";
+import Logo from "../assets/imageOrginals/4ServeLogoStandAlone.jpg";
 import PolicyModal from "./PolicyModal"; // Create this component next
 
 const Footer: React.FC = () => {

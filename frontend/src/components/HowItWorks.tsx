@@ -1,5 +1,5 @@
-import howItWorksImage from "../assets/images/4ServeLogoStandAlone.jpg"; // replace with your tablet image
 import React from "react";
+import heroVideo from "../assets/vidoes/howItWorksVideo1.mp4"; // video now used here
 
 const HowItWorks: React.FC = () => {
     return (
@@ -36,20 +36,26 @@ const HowItWorks: React.FC = () => {
                 How It Works
             </div>
 
-            {/* Left Slogan & Right Tablet */}
+            {/* Top row: Left text, Right video */}
             <div
+                className="how-top-row"
                 style={{
                     display: "flex",
-                    flexDirection: "row",
-                    flexWrap: "wrap",
+                    flexDirection: "row",   // base row
+                    flexWrap: "wrap",       // will be overridden on desktop
                     alignItems: "center",
                     justifyContent: "center",
                     gap: "60px",
                     width: "100%",
                 }}
             >
-                {/* Left Slogan */}
-                <div style={{ flex: "1 1 400px", maxWidth: "500px" }}>
+                {/* Left Slogan / Text */}
+                <div
+                    style={{
+                        flex: "1 1 400px",
+                        maxWidth: "500px",
+                    }}
+                >
                     <h2
                         style={{
                             fontSize: "clamp(1.5rem, 2.5vw, 2rem)",
@@ -60,35 +66,46 @@ const HowItWorks: React.FC = () => {
                         Simple, Powerful, Ready
                     </h2>
                     <p style={{ fontSize: "1.15rem", margin: 0 }}>
-                        Our platform makes it easy for small businesses to connect with customers nearby. No complexity, just results.
+                        Our platform makes it easy for small businesses to connect with customers nearby.
+                        No complexity, just results.
                     </p>
                 </div>
 
-                {/* Right Tablet Image */}
-                <div style={{ flex: "1 1 300px", display: "flex", justifyContent: "center" }}>
+                {/* Right: Video (larger, no black box) */}
+                <div
+                    style={{
+                        flex: "1 1 300px",
+                        display: "flex",
+                        justifyContent: "flex-end", // push video to the right on wide screens
+                    }}
+                >
                     <div
                         style={{
-                            background: "black",
-                            borderRadius: "30px",
-                            padding: "15px",
-                            boxShadow: "0 8px 20px rgba(0,0,0,0.4)",
-                            aspectRatio: "4 / 3",
-                            maxWidth: "400px",
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
+                            position: "relative",
+                            width: "min(90vw, 520px)",                // nice big width
+                            height: "calc(min(90vw, 520px) * 9 / 16)", // 16:9 ratio
+                            borderRadius: 26,
                             overflow: "hidden",
+                            background: "transparent",
+                            boxShadow: "0 14px 32px rgba(0,0,0,0.55)",
+                            border: "1px solid rgba(0,212,255,0.25)",
                         }}
                     >
-                        <img
-                            src={howItWorksImage}
-                            alt="Tablet Example"
+                        <video
+                            src={heroVideo}
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
                             style={{
-                                width: "95%",
-                                height: "95%",
-                                objectFit: "cover",
-                                objectPosition: "center 40%",
-                                borderRadius: "20px",
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",      // fills frame, hides any black bars
+                                borderRadius: 26,
+                                display: "block",
+                                opacity: 0.97,
+                                mixBlendMode: "screen",
+                                filter: "brightness(1.1) contrast(1.05)",
                             }}
                         />
                     </div>
@@ -136,7 +153,17 @@ const HowItWorks: React.FC = () => {
                             transition: "transform 0.3s ease, box-shadow 0.3s ease",
                         }}
                     >
-                        <h3 style={{ fontSize: "1.3rem", marginBottom: "10px", color: "#00D4FF", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
+                        <h3
+                            style={{
+                                fontSize: "1.3rem",
+                                marginBottom: "10px",
+                                color: "#00D4FF",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "10px",
+                            }}
+                        >
                             <span
                                 style={{
                                     display: "inline-flex",
@@ -159,18 +186,30 @@ const HowItWorks: React.FC = () => {
                 ))}
             </div>
 
-            {/* Styles for hover animation and responsiveness */}
+            {/* Styles for hover + layout responsiveness */}
             <style>{`
                 .how-box:hover {
                     transform: translateY(-10px);
                     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
                 }
 
+                /* Desktop: FORCE true left/right row layout */
+                @media (min-width: 900px) {
+                    .how-top-row {
+                        flex-direction: row !important;
+                        flex-wrap: nowrap !important;
+                        align-items: center !important;
+                        justify-content: space-between !important;
+                    }
+                }
+
+                /* Mobile/Tablet: stack text above video */
                 @media (max-width: 768px) {
-                    #how-it-works-section div:nth-child(2) {
-                        flex-direction: column;
+                    #how-it-works-section .how-top-row {
+                        flex-direction: column !important;
                         gap: 40px;
-                        align-items: center;
+                        align-items: center !important;
+                        justify-content: center !important;
                     }
                 }
             `}</style>

@@ -100,3 +100,60 @@ button {
     box-shadow: 0 8px 18px rgba(0, 212, 255, 0.6);
 }
 
+/* === 3-column site shell === */
+
+:root {
+    /* You can tweak these later */
+    --site-shell-bg: #001a33;          /* outer blue */
+    --site-shell-max-width: 1200px;    /* width of middle column on big screens */
+    --site-shell-side-min: 1fr;        /* how wide the side columns can stretch */
+}
+
+/* Body background to match the shell */
+body {
+    background: var(--site-shell-bg);
+}
+
+/* Shell grid: left blue, center content, right blue */
+.site-shell {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns:
+      minmax(0, var(--site-shell-side-min))
+      minmax(0, var(--site-shell-max-width))
+      minmax(0, var(--site-shell-side-min));
+    background: var(--site-shell-bg);
+}
+
+/* Left / right blue columns */
+.site-shell__side {
+    background: var(--site-shell-bg);
+}
+
+/* Middle content column */
+.site-shell__center {
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Padding inside center so content doesn't touch the edge */
+.site-shell__inner {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 0 clamp(16px, 3vw, 32px);
+}
+
+/* On smaller screens, collapse to a single column and hide sides */
+@media (max-width: 900px) {
+    .site-shell {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .site-shell__side {
+        display: none;
+    }
+    .site-shell__inner {
+        padding: 0 clamp(12px, 4vw, 20px);
+    }
+}

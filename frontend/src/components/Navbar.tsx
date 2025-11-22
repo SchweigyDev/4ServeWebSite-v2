@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { FaFacebookF, FaTwitter, FaInstagram } from "react-icons/fa";
-import newLogo from '../assets/images/4ServeLogoStandAlone.jpg';
+import newLogo from '../assets/imageOrginals/4ServeLogoStandAlone.jpg';
 
 const Navbar = () => {
     const [_windowWidth, setWindowWidth] = useState(window.innerWidth);

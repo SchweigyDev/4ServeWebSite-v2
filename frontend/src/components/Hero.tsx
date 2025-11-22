@@ -1,6 +1,6 @@
-import newLogo from "../assets/images/4ServeLogoStandAlone.jpg";
 import { useState, useEffect } from "react";
 import { animated, useSpring } from "@react-spring/web";
+import heroVideo from "../assets/vidoes/heroSectionVideo1.mp4";
 
 const Hero = () => {
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -9,8 +9,10 @@ const Hero = () => {
     useEffect(() => {
         const handleResize = () => setWindowWidth(window.innerWidth);
         const handleScroll = () => setScrollY(window.scrollY);
+
         window.addEventListener("resize", handleResize);
         window.addEventListener("scroll", handleScroll);
+
         return () => {
             window.removeEventListener("resize", handleResize);
             window.removeEventListener("scroll", handleScroll);
@@ -27,7 +29,9 @@ const Hero = () => {
     });
 
     const logoAnim = useSpring({
-        transform: `translateY(${scrollY * 0.05}px) translateY(${Math.sin(scrollY / 50) * 5}px) scale(1)`,
+        transform: `translateY(${scrollY * 0.05}px) translateY(${
+            Math.sin(scrollY / 50) * 5
+        }px) scale(1)`,
         opacity: 1,
         from: { opacity: 0, transform: "scale(0.8) translateY(0px)" },
         config: { mass: 1, tension: 170, friction: 26 },
@@ -60,20 +64,32 @@ const Hero = () => {
                     flexDirection: isMobile ? "column" : "row",
                     alignItems: "center",
                     gap: isMobile ? "40px" : "60px",
+                    maxWidth: 1400,   // ⬅️ Extra room for bigger video
+                    width: "100%",
                 }}
             >
-                {/* Left Text */}
-                <animated.div style={{ ...leftAnim, maxWidth: isMobile ? "100%" : "50%" }}>
+                {/* Left Text Block */}
+                <animated.div
+                    style={{
+                        ...leftAnim,
+                        maxWidth: isMobile ? "100%" : "48%", // ⬅️ slightly narrower text to make room
+                    }}
+                >
                     <p
                         style={{
-                            fontSize: isMobile ? "1.4rem" : "clamp(1.6rem, 2vw, 2rem)",
+                            fontSize: isMobile
+                                ? "1.4rem"
+                                : "clamp(1.6rem, 2vw, 2rem)",
                             marginBottom: "15px",
                             fontWeight: 700,
-                            background: "linear-gradient(90deg, #0066FF, #00D4FF)",
+                            background:
+                                "linear-gradient(90deg, #0066FF, #00D4FF)",
                             WebkitBackgroundClip: "text",
                             color: "transparent",
-                            textShadow: "0 0 8px rgba(0,212,255,0.4)",
-                            animation: "glow 2s ease-in-out infinite alternate",
+                            textShadow:
+                                "0 0 8px rgba(0,212,255,0.4)",
+                            animation:
+                                "glow 2s ease-in-out infinite alternate",
                         }}
                     >
                         Control When It Belongs.
@@ -83,11 +99,15 @@ const Hero = () => {
                         <animated.p
                             key={idx}
                             style={{
-                                fontSize: isMobile ? "1.2rem" : "clamp(1.3rem, 1.8vw, 1.5rem)",
+                                fontSize: isMobile
+                                    ? "1.2rem"
+                                    : "clamp(1.3rem, 1.8vw, 1.5rem)",
                                 margin: "10px 0",
                                 opacity: 0,
                                 transform: "translateY(20px)",
-                                animation: `slideFadeIn 0.8s forwards ${idx * 0.4}s`,
+                                animation: `slideFadeIn 0.8s forwards ${
+                                    idx * 0.4
+                                }s`,
                             }}
                         >
                             {line}
@@ -96,13 +116,17 @@ const Hero = () => {
 
                     <p
                         style={{
-                            fontSize: isMobile ? "1rem" : "clamp(1rem, 1.2vw, 1.1rem)",
+                            fontSize: isMobile
+                                ? "1rem"
+                                : "clamp(1rem, 1.2vw, 1.1rem)",
                             marginTop: "20px",
                             color: "#AAAAAA",
                             lineHeight: 1.5,
                         }}
                     >
-                        Stop shouting into the void. Start connecting with customers who are actually nearby and ready to act. Simple tools, real results, your control.
+                        Stop shouting into the void. Start connecting with
+                        customers who are actually nearby and ready to act.
+                        Simple tools, real results, your control.
                     </p>
 
                     <div
@@ -111,7 +135,9 @@ const Hero = () => {
                             flexDirection: isMobile ? "column" : "row",
                             gap: "15px",
                             marginTop: "20px",
-                            alignItems: isMobile ? "center" : "flex-start",
+                            alignItems: isMobile
+                                ? "center"
+                                : "flex-start",
                         }}
                     >
                         <a
@@ -129,19 +155,71 @@ const Hero = () => {
                     </div>
                 </animated.div>
 
-                {/* Right Logo */}
-                <animated.div style={{ ...logoAnim, marginLeft: isMobile ? "0" : "150px" }}>
-                    <img
-                        src={newLogo}
-                        alt="4Serve Logo"
+                {/* Right: Enlarged Hero Video */}
+                <animated.div
+                    style={{
+                        ...logoAnim,
+                        marginLeft: isMobile ? "0" : "60px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        maxWidth: isMobile ? "100%" : "52%", // ⬅️ wider area for video
+                    }}
+                >
+                    <div
                         style={{
-                            maxHeight: isMobile ? "180px" : "clamp(200px, 25vw, 300px)",
-                            width: "auto",
+                            position: "relative",
+
+                            // 📌 Bigger desktop size
+                            width: isMobile
+                                ? "min(90vw, 380px)"
+                                : "min(48vw, 680px)",
+
+                            height: isMobile
+                                ? "min(52vw, 240px)"
+                                : "min(28vw, 340px)",
+
+                            borderRadius: 26,
+                            overflow: "hidden",
+                            background: "transparent",
+
+                            transform: isMobile
+                                ? "none"
+                                : "rotateY(-8deg) rotateX(2deg)",
+
+                            boxShadow: isMobile
+                                ? "0 10px 22px rgba(0,0,0,0.45)"
+                                : "0 18px 40px rgba(0,0,0,0.65)",
+
+                            transformStyle: "preserve-3d",
+                            border: "1px solid rgba(0,212,255,0.25)",
                         }}
-                    />
+                    >
+                        <video
+                            src={heroVideo}
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                borderRadius: 26,
+                                opacity: 0.95,
+                                mixBlendMode: "screen",
+                                filter:
+                                    "brightness(1.12) contrast(1.05)",
+                                transform: "scale(1.06)",
+                                transformOrigin: "center center",
+                                display: "block",
+                            }}
+                        />
+                    </div>
                 </animated.div>
             </div>
 
+            {/* Styles */}
             <style>{`
         @keyframes glow {
           0% { text-shadow: 0 0 4px rgba(0,212,255,0.3); }

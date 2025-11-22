@@ -10,18 +10,14 @@ import CTA from "./components/CTA";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 import ChatbotButton from "./components/Chatbot";
-import UserCaseShowCase from "./components/UserCaseShowCase";
+
+// ⬅️ new import (adjust path if you put it somewhere else)
+import SiteShell from "./components/layout/SiteShell";
 
 function App() {
     return (
-        <div
-            className="App"
-            style={{
-                fontFamily: "sans-serif",
-                color: "#fff",
-                background: "#111",
-            }}
-        >
+        <SiteShell>
+            {/* Everything inside here lives in the middle column */}
             <Navbar />
             <Hero />
             <WhatsBroken />
@@ -29,12 +25,12 @@ function App() {
             <HowItWorks />
             <TheUserSide />
             <UserCases />
-            <UserCaseShowCase />
+            {/* <UserCaseShowCase /> */}
             <CTA />
             <Footer />
             <ScrollToTop />
             <ChatbotButton />
-        </div>
+        </SiteShell>
     );
 }
 

@@ -1,7 +1,15 @@
+// /frontend/src/components/UserCaseShowCase.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { FC } from "react";
 
-// ---------- Image imports ----------
+// ===================
+// Tunables
+// ===================
+const RIBBON_SPEED_PX_PER_SEC = 50;    // pixels/sec auto-scroll
+const DRAG_CLICK_THRESHOLD_PX = 6;      // max movement to still count as a click on ribbon
+const MODAL_SWIPE_THRESHOLD_PX = 40;    // swipe distance in modal to trigger next/prev
+
+// Images
 import i1 from "../assets/images_cropped/Iphone1.png";
 import i2 from "../assets/images_cropped/Iphone2.png";
 import i3 from "../assets/images_cropped/Iphone3.png";
@@ -17,7 +25,7 @@ export interface ImageItem {
     caption?: string;
 }
 
-const baseImages: ImageItem[] = [
+const images: ImageItem[] = [
     { src: i1, alt: "Order flow", caption: "Order Flow" },
     { src: i2, alt: "Chef dashboard", caption: "Chef Dashboard" },
     { src: i3, alt: "Menu builder", caption: "Menu Builder" },
@@ -28,368 +36,676 @@ const baseImages: ImageItem[] = [
     { src: i8, alt: "Favorites", caption: "Favorites" },
 ];
 
-const toEight = (items: ImageItem[]) => {
-    const out: ImageItem[] = [];
-    while (out.length < 8) out.push(...items.slice(0, 8 - out.length));
-    return out.slice(0, 8);
-};
-const images8 = toEight(baseImages);
+// ===================
+// Infinite ribbon
+// ===================
+const InfiniteRibbon: FC<{ images: ImageItem[] }> = ({ images }) => {
+    const base = useMemo(() => images, [images]);
+    const trackImages = useMemo(() => [...base, ...base, ...base], [base]); // seamless loop
 
-// ---------- Section wrapper ----------
-const SectionCard: FC<{ title: string; subtitle?: string; children: React.ReactNode }> = ({
-                                                                                              title,
-                                                                                              subtitle,
-                                                                                              children,
-                                                                                          }) => (
-    <section style={{ padding: "48px 0" }}>
-        <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 16px" }}>
-            <header style={{ marginBottom: 16 }}>
-                <h2 style={{ fontSize: 28, fontWeight: 600, margin: 0 }}>{title}</h2>
-                {subtitle && <p style={{ marginTop: 6, opacity: 0.75 }}>{subtitle}</p>}
-            </header>
-            <div
-                style={{
-                    borderRadius: 16,
-                    border: "1px solid rgba(0,0,0,.08)",
-                    background: "rgba(255,255,255,.04)",
-                    padding: 16,
-                    boxShadow: "0 10px 24px rgba(0,0,0,.08)",
-                }}
-            >
-                {children}
-            </div>
-        </div>
-    </section>
-);
+    const wrapRef = useRef<HTMLDivElement | null>(null);
+    const trackRef = useRef<HTMLDivElement | null>(null);
+    const posRef = useRef(0);
+    const lastTsRef = useRef<number | null>(null);
+    const rafRef = useRef<number | null>(null);
 
-// ---------- Option 1: Infinite Ribbon ----------
-const InfiniteRibbon: FC<{ images: ImageItem[]; speed?: number }> = ({ images, speed = 50 }) => {
-    const track = useMemo(() => [...images, ...images], [images]);
-    const durationSec = Math.max((images.length * 280) / speed, 10);
-    const keyframes = `
-    @keyframes ribbonScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-  `;
+    const [isPaused, setIsPaused] = useState(false);
+    const [dragging, setDragging] = useState(false);
+    const [activeIndex, setActiveIndex] = useState<number | null>(null); // 0..7
 
-    return (
-        <div style={{ position: "relative", overflow: "hidden" }}>
-            <style>{keyframes}</style>
-            <div
-                style={{
-                    width: "200%",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 24,
-                    animation: `ribbonScroll ${durationSec}s linear infinite`,
-                    padding: "8px 0",
-                }}
-            >
-                {track.map((img, idx) => (
-                    <figure key={`${img.src}-r1-${idx}`} style={{ margin: 0, textAlign: "center" }}>
-                        <div
-                            style={{
-                                position: "relative",
-                                width: "min(26vw, 300px)",
-                                height: "calc(min(26vw, 300px) * 4 / 3)",
-                                borderRadius: 16,
-                                overflow: "hidden",
-                                background: "transparent",
-                                border: "none",
-                                boxShadow: "none",
-                            }}
-                        >
-                            <img
-                                src={img.src}
-                                alt={img.alt}
-                                loading="lazy"
-                                style={{
-                                    display: "block",
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "contain",
-                                    background: "transparent",
-                                }}
-                            />
-                        </div>
-                        {img.caption && (
-                            <figcaption style={{ marginTop: 8, fontSize: 13, opacity: 0.75 }}>
-                                {img.caption}
-                            </figcaption>
-                        )}
-                    </figure>
-                ))}
-            </div>
-        </div>
-    );
-};
+    // speed
+    const pxPerSecRef = useRef(RIBBON_SPEED_PX_PER_SEC);
+    useEffect(() => {
+        pxPerSecRef.current = RIBBON_SPEED_PX_PER_SEC;
+    }, []);
 
-// ---------- Option 3: Arced Coverflow ----------
-const ArcedCoverflow: FC<{ images: ImageItem[]; intervalMs?: number }> = ({
-                                                                              images,
-                                                                              intervalMs = 2400,
-                                                                          }) => {
-    const [index, setIndex] = useState(0);
-    const count = images.length || 1;
-    const timer = useRef<number | null>(null);
+    const getLoopWidth = () => {
+        const track = trackRef.current;
+        return track ? Math.max(Math.floor(track.scrollWidth / 3), 1) : 1;
+    };
+
+    const wrapPosition = () => {
+        const loopW = getLoopWidth();
+        if (posRef.current <= -loopW) posRef.current += loopW;
+        if (posRef.current >= 0) posRef.current -= loopW;
+    };
+
+    // RAF
+    const tick = (ts: number) => {
+        if (lastTsRef.current == null) lastTsRef.current = ts;
+        const dt = (ts - lastTsRef.current) / 1000;
+        lastTsRef.current = ts;
+
+        const shouldAuto = !isPaused && !dragging && activeIndex == null;
+        if (shouldAuto) {
+            posRef.current -= pxPerSecRef.current * dt;
+            wrapPosition();
+            if (trackRef.current)
+                trackRef.current.style.transform = `translateX(${posRef.current}px)`;
+        }
+        rafRef.current = requestAnimationFrame(tick);
+    };
 
     useEffect(() => {
-        timer.current = window.setInterval(() => setIndex((i) => (i + 1) % count), intervalMs);
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        lastTsRef.current = null;
+        rafRef.current = requestAnimationFrame(tick);
         return () => {
-            if (timer.current !== null) window.clearInterval(timer.current);
-            timer.current = null;
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+            rafRef.current = null;
         };
-    }, [count, intervalMs]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isPaused, dragging, activeIndex]);
 
-    const positions = useMemo(() => {
-        const radius = 320;
-        const maxTilt = 14;
-        return images.map((_, i) => {
-            const offset = (i - index + count) % count;
-            const half = Math.floor(count / 2);
-            let pos = offset;
-            if (offset > half) pos = offset - count;
-            const x = pos * (radius / Math.max(half, 1));
-            const scale = 1 - Math.min(Math.abs(pos) * 0.1, 0.45);
-            const tilt = -pos * maxTilt;
-            const zIndex = 100 - Math.abs(pos);
-            const opacity = 1 - Math.min(Math.abs(pos) * 0.08, 0.5);
-            return { x, scale, tilt, zIndex, opacity };
+    // -------- Click-through on wrapper while using pointer capture --------
+    type DragState = {
+        startX: number;
+        lastX: number;
+        moved: number;
+        downTargetIdx: number | null; // which card was pressed (base index)
+    };
+
+    const dragState = useRef<DragState | null>(null);
+
+    // Helper: climb DOM to find data-base-idx
+    const findBaseIdxFromEventTarget = (el: EventTarget | null): number | null => {
+        let node = el as HTMLElement | null;
+        while (node && node !== wrapRef.current) {
+            if (node.hasAttribute?.("data-base-idx")) {
+                const v = node.getAttribute("data-base-idx");
+                return v ? parseInt(v, 10) : null;
+            }
+            node = node.parentElement;
+        }
+        return null;
+    };
+
+    const onPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
+        // 🔒 When modal is open, ignore ribbon pointer events completely
+        if (activeIndex != null) return;
+
+        e.currentTarget.setPointerCapture(e.pointerId);
+        dragState.current = {
+            startX: e.clientX,
+            lastX: e.clientX,
+            moved: 0,
+            downTargetIdx: findBaseIdxFromEventTarget(e.target),
+        };
+        setDragging(true);
+        setIsPaused(true);
+    };
+
+    const onPointerMove: React.PointerEventHandler<HTMLDivElement> = (e) => {
+        if (activeIndex != null) return; // ignore when modal open
+        if (!dragState.current) return;
+
+        const dx = e.clientX - dragState.current.lastX;
+        dragState.current.lastX = e.clientX;
+        dragState.current.moved += Math.abs(dx);
+
+        posRef.current += dx;
+        wrapPosition();
+        if (trackRef.current)
+            trackRef.current.style.transform = `translateX(${posRef.current}px)`;
+    };
+
+    const onPointerUp: React.PointerEventHandler<HTMLDivElement> = (e) => {
+        if (activeIndex != null && dragState.current == null) return; // if modal already open, do nothing
+
+        e.currentTarget.releasePointerCapture(e.pointerId);
+        const state = dragState.current;
+        dragState.current = null;
+        setDragging(false);
+
+        if (activeIndex != null) {
+            // if modal opened during this interaction, don't treat as ribbon click
+            return;
+        }
+
+        const moved = state?.moved ?? 0;
+        const pressedIdx = state?.downTargetIdx ?? null;
+
+        // Treat as click if we started on a card & didn't move much
+        if (pressedIdx !== null && moved <= DRAG_CLICK_THRESHOLD_PX) {
+            setActiveIndex((prev) => {
+                if (prev === pressedIdx) {
+                    // close if same
+                    setIsPaused(false);
+                    return null;
+                }
+                // open new
+                setIsPaused(true);
+                return pressedIdx;
+            });
+            return;
+        }
+
+        // otherwise resume auto if no modal
+        if (activeIndex == null) setIsPaused(false);
+    };
+
+    // Modal controls (functional updates so they always work)
+    const closeModal = () => {
+        setActiveIndex(null);
+        setIsPaused(false);
+    };
+
+    const nextModal = () => {
+        setActiveIndex((prev) => {
+            if (prev == null) return prev;
+            return (prev + 1) % base.length;
         });
-    }, [images, index, count]);
+    };
 
-    return (
-        <div style={{ position: "relative", height: 560, maxWidth: 1200, margin: "0 auto" }}>
-            {images.map((img, i) => {
-                const { x, scale, tilt, zIndex, opacity } = positions[i];
-                return (
-                    <figure
-                        key={img.src + i}
-                        style={{
-                            position: "absolute",
-                            left: "50%",
-                            top: "50%",
-                            transform: `translate(calc(-50% + ${x}px), -50%) rotate(${tilt}deg) scale(${scale})`,
-                            zIndex,
-                            opacity,
-                            transition: "transform 500ms, opacity 500ms",
-                            margin: 0,
-                        }}
-                    >
-                        <div
-                            style={{
-                                width: "min(60vw, 520px)",
-                                height: "calc(min(60vw, 520px) * 4 / 3)",
-                                borderRadius: 16,
-                                overflow: "hidden",
-                                background: "transparent",
-                                border: "none",
-                                boxShadow: "none",
-                            }}
-                        >
-                            <img
-                                src={img.src}
-                                alt={img.alt}
-                                loading="lazy"
-                                style={{
-                                    display: "block",
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "contain",
-                                    background: "transparent",
-                                }}
-                            />
-                        </div>
-                        {i === index && img.caption && (
-                            <figcaption style={{ marginTop: 10, textAlign: "center", opacity: 0.8 }}>
-                                {img.caption}
-                            </figcaption>
-                        )}
-                    </figure>
-                );
-            })}
-        </div>
-    );
-};
+    const prevModal = () => {
+        setActiveIndex((prev) => {
+            if (prev == null) return prev;
+            return (prev - 1 + base.length) % base.length;
+        });
+    };
 
-// ---------- Option 4: 3D Orbital Ring (centered) ----------
-const OrbitalRing: FC<{ images: ImageItem[]; radius?: number; speedSec?: number }> = ({
-                                                                                          images,
-                                                                                          radius = 400,
-                                                                                          speedSec = 26,
-                                                                                      }) => {
-    const base = toEight(images);
-    const step = 360 / base.length;
-    const keyframes = `
-    @keyframes spinY { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+    // ESC / arrows
+    useEffect(() => {
+        if (activeIndex == null) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") closeModal();
+            if (e.key === "ArrowRight") nextModal();
+            if (e.key === "ArrowLeft") prevModal();
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [activeIndex]);
+
+    // -------- Swipe inside modal for next/prev --------
+    type ModalDragState = {
+        startX: number;
+        lastX: number;
+        movedX: number;
+    };
+
+    const modalDragRef = useRef<ModalDragState | null>(null);
+
+    const onModalPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
+        e.stopPropagation(); // don’t bubble to backdrop
+        modalDragRef.current = { startX: e.clientX, lastX: e.clientX, movedX: 0 };
+    };
+    const onModalPointerMove: React.PointerEventHandler<HTMLDivElement> = (e) => {
+        if (!modalDragRef.current) return;
+        const dx = e.clientX - modalDragRef.current.lastX;
+        modalDragRef.current.lastX = e.clientX;
+        modalDragRef.current.movedX += dx;
+    };
+    const onModalPointerUp: React.PointerEventHandler<HTMLDivElement> = (e) => {
+        if (!modalDragRef.current) return;
+        e.stopPropagation();
+        const totalDx = modalDragRef.current.movedX;
+        modalDragRef.current = null;
+
+        if (Math.abs(totalDx) >= MODAL_SWIPE_THRESHOLD_PX) {
+            if (totalDx < 0) {
+                // swipe left -> next
+                nextModal();
+            } else {
+                // swipe right -> prev
+                prevModal();
+            }
+        }
+    };
+
+    // CSS
+    const styleTag = `
+    .ir-wrap {
+      --ribbon-gap: 20px;
+      --card-w: clamp(140px, 22vw, 260px); /* slightly smaller phones */
+    }
+    @media (min-width: 1280px) {
+      .ir-wrap { --card-w: clamp(180px, 18vw, 280px); --ribbon-gap: 24px; }
+    }
+    @media (min-width: 1536px) {
+      .ir-wrap { --card-w: clamp(200px, 16vw, 300px); --ribbon-gap: 26px; }
+    }
+    @media (min-width: 1920px) {
+      .ir-wrap { --card-w: clamp(220px, 14vw, 320px); --ribbon-gap: 28px; }
+    }
+    @media (max-width: 640px) {
+      .ir-wrap { --card-w: clamp(130px, 44vw, 190px); --ribbon-gap: 16px; }
+    }
+
+    .ir-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 24px;
+    }
+    .ir-modal-card {
+      position: relative;
+      width: min(70vw, 520px); /* smaller pop-out */
+      height: calc(min(70vw, 520px) * 4 / 3);
+      border-radius: 18px;
+      overflow: hidden;
+      background: transparent;
+      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+      animation: irPop .18s ease-out;
+      touch-action: pan-y;
+    }
+    .ir-btn {
+      position: absolute;
+      border: none;
+      color: white;
+      background: rgba(0,0,0,.5);
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      z-index: 1;
+    }
+    .ir-close { top: 10px; right: 12px; }
+    .ir-prev  { top: 50%; left: 12px; transform: translateY(-50%); }
+    .ir-next  { top: 50%; right: 12px; transform: translateY(-50%); }
+    .ir-modal-caption {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 8px;
+      text-align: center;
+      color: white;
+      font-weight: 600;
+      text-shadow: 0 2px 6px rgba(0,0,0,.45);
+      pointer-events: none;
+    }
+    @keyframes irPop {
+      from { transform: scale(.96); opacity: .8; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
   `;
 
     return (
         <div
+            ref={wrapRef}
+            className="ir-wrap"
+            key={`speed-${RIBBON_SPEED_PX_PER_SEC}`}
             style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                minHeight: 680,
-                maxWidth: 1200,
-                margin: "0 auto",
                 position: "relative",
-                perspective: "1200px",
                 overflow: "hidden",
+                width: "100%",
+                padding: "8px 0",
+                touchAction: "pan-y",
             }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
         >
-            <style>{keyframes}</style>
+            <style>{styleTag}</style>
 
             <div
+                ref={trackRef}
                 style={{
-                    width: 560,
-                    height: 560,
-                    position: "relative",
-                    transformStyle: "preserve-3d",
-                    animation: `spinY ${speedSec}s linear infinite`,
-                }}
-            >
-                {base.map((img, i) => (
-                    <figure
-                        key={img.src + i}
-                        style={{
-                            position: "absolute",
-                            left: "50%",
-                            top: "50%",
-                            transformStyle: "preserve-3d",
-                            transform: `translate(-50%, -50%) rotateY(${i * step}deg) translateZ(${radius}px)`,
-                            margin: 0,
-                        }}
-                    >
-                        <div
-                            style={{
-                                width: 260,
-                                height: (260 * 4) / 3,
-                                borderRadius: 16,
-                                overflow: "hidden",
-                                background: "transparent",
-                                border: "none",
-                                boxShadow: "none",
-                                backfaceVisibility: "hidden",
-                            }}
-                        >
-                            <img
-                                src={img.src}
-                                alt={img.alt}
-                                loading="lazy"
-                                style={{
-                                    display: "block",
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "contain",
-                                    background: "transparent",
-                                }}
-                            />
-                        </div>
-                    </figure>
-                ))}
-            </div>
-
-            <div
-                style={{
-                    position: "absolute",
-                    left: "50%",
-                    top: "50%",
-                    width: 220,
-                    height: 220,
-                    transform: "translate(-50%, -50%)",
-                    borderRadius: "50%",
-                    background:
-                        "radial-gradient(closest-side, rgba(255,255,255,.18), rgba(255,255,255,0))",
-                    filter: "blur(4px)",
-                    pointerEvents: "none",
-                }}
-            />
-        </div>
-    );
-};
-
-// ---------- Option 5: Infinite Ribbon (exactly 8 phones) ----------
-const InfiniteRibbonEight: FC<{ images: ImageItem[]; speed?: number }> = ({
-                                                                              images,
-                                                                              speed = 55,
-                                                                          }) => {
-    const base = toEight(images);
-    const track = useMemo(() => [...base, ...base], [base]);
-    const durationSec = Math.max((base.length * 300) / speed, 10);
-    const keyframes = `
-    @keyframes ribbonScroll8 { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-  `;
-
-    return (
-        <div style={{ position: "relative", overflow: "hidden" }}>
-            <style>{keyframes}</style>
-            <div
-                style={{
-                    width: "200%",
                     display: "flex",
                     alignItems: "center",
-                    gap: 28,
-                    animation: `ribbonScroll8 ${durationSec}s linear infinite`,
+                    gap: "var(--ribbon-gap)",
+                    willChange: "transform",
+                    transform: `translateX(${posRef.current}px)`,
+                    userSelect: dragging ? "none" : "auto",
+                    cursor: dragging ? "grabbing" : "grab",
+                    minWidth: "100vw",
                     padding: "8px 0",
                 }}
             >
-                {track.map((img, idx) => (
-                    <figure key={`${img.src}-r8-${idx}`} style={{ margin: 0, textAlign: "center" }}>
-                        <div
+                {trackImages.map((img, idx) => {
+                    const baseIdx = base.length ? idx % base.length : 0;
+                    const isActive = activeIndex === baseIdx;
+                    return (
+                        <figure
+                            key={`${img.src}-r-${idx}`}
+                            data-base-idx={baseIdx} // lets wrapper know which card was pressed
                             style={{
-                                position: "relative",
-                                width: "min(26vw, 300px)",
-                                height: "calc(min(26vw, 300px) * 4 / 3)",
-                                borderRadius: 16,
-                                overflow: "hidden",
-                                background: "transparent",
-                                border: "none",
-                                boxShadow: "none",
+                                margin: 0,
+                                textAlign: "center",
+                                transition: "transform 220ms ease, filter 220ms ease",
+                                transform: isActive ? "translateY(-10px) scale(1.08)" : "none",
+                                filter: isActive
+                                    ? "drop-shadow(0 12px 22px rgba(0,0,0,.35))"
+                                    : "none",
                             }}
                         >
-                            <img
-                                src={img.src}
-                                alt={img.alt}
-                                loading="lazy"
+                            <div
+                                data-base-idx={baseIdx}
                                 style={{
-                                    display: "block",
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "contain",
+                                    position: "relative",
+                                    width: "var(--card-w)",
+                                    height: "calc(var(--card-w) * 4 / 3)",
+                                    borderRadius: 16,
+                                    overflow: "hidden",
                                     background: "transparent",
+                                    border: "none",
+                                    boxShadow: "none",
                                 }}
-                            />
-                        </div>
-                        {img.caption && (
-                            <figcaption style={{ marginTop: 8, fontSize: 13, opacity: 0.75 }}>
-                                {img.caption}
-                            </figcaption>
-                        )}
-                    </figure>
-                ))}
+                            >
+                                <img
+                                    data-base-idx={baseIdx}
+                                    src={img.src}
+                                    alt={img.alt}
+                                    loading="lazy"
+                                    style={{
+                                        display: "block",
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "contain",
+                                        background: "transparent",
+                                        pointerEvents: "none", // pointer handled by wrapper
+                                    }}
+                                />
+                            </div>
+                            {img.caption && (
+                                <figcaption
+                                    style={{
+                                        marginTop: 8,
+                                        fontSize: 13,
+                                        opacity: isActive ? 1 : 0.75,
+                                        fontWeight: isActive ? 600 : 400,
+                                    }}
+                                >
+                                    {img.caption}
+                                </figcaption>
+                            )}
+                        </figure>
+                    );
+                })}
             </div>
+
+            {/* status pill */}
+            <div
+                style={{
+                    position: "absolute",
+                    right: 10,
+                    bottom: 8,
+                    fontSize: 12,
+                    opacity: 0.65,
+                    background: "rgba(0,0,0,.38)",
+                    color: "white",
+                    padding: "4px 8px",
+                    borderRadius: 8,
+                    pointerEvents: "none",
+                }}
+            >
+                {activeIndex != null || isPaused ? "Paused" : "Auto"} •{" "}
+                {RIBBON_SPEED_PX_PER_SEC} px/s
+            </div>
+
+            {/* Modal (click outside = close) */}
+            {activeIndex != null && (
+                <div
+                    className="ir-modal-backdrop"
+                    onClick={closeModal}
+                    role="dialog"
+                    aria-modal="true"
+                >
+                    <div
+                        className="ir-modal-card"
+                        onClick={(e) => e.stopPropagation()} // don't close when clicking inside
+                        onPointerDown={onModalPointerDown}
+                        onPointerMove={onModalPointerMove}
+                        onPointerUp={onModalPointerUp}
+                        onPointerCancel={onModalPointerUp}
+                    >
+                        <button
+                            className="ir-btn ir-prev"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                prevModal();
+                            }}
+                        >
+                            ‹ Prev
+                        </button>
+                        <button
+                            className="ir-btn ir-next"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                nextModal();
+                            }}
+                        >
+                            Next ›
+                        </button>
+                        <button
+                            className="ir-btn ir-close"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                closeModal();
+                            }}
+                        >
+                            ✕
+                        </button>
+
+                        <img
+                            src={base[activeIndex].src}
+                            alt={base[activeIndex].alt}
+                            style={{
+                                display: "block",
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "contain",
+                                background: "transparent",
+                            }}
+                        />
+                        {base[activeIndex].caption && (
+                            <div className="ir-modal-caption">
+                                {base[activeIndex].caption}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
-// ---------- Main ----------
+// ===================
+// Section wrapper
+// ===================
 const UserCaseShowCase: FC = () => (
-    <div style={{ width: "100%" }}>
-        <SectionCard title="Option 1 — Infinite Ribbon" subtitle="Smooth, minimal ribbon.">
-            <InfiniteRibbon images={images8} />
-        </SectionCard>
-
-        <SectionCard title="Option 3 — Arced Coverflow (Bigger)" subtitle="Curved track with larger phones.">
-            <ArcedCoverflow images={images8} />
-        </SectionCard>
-
-        <SectionCard title="Option 4 — 3D Orbital Ring (Centered)" subtitle="Phones orbit in 3D around a soft glow.">
-            <OrbitalRing images={images8} />
-        </SectionCard>
-
-        <SectionCard title="Option 5 — Ribbon (Exactly 8 Phones)" subtitle="Loops the 8 phones exactly.">
-            <InfiniteRibbonEight images={images8} />
-        </SectionCard>
-    </div>
+    <section
+        style={{
+            padding: "48px 0",
+            background: "rgba(0, 102, 255, 0.08)",
+        }}
+    >
+        <div style={{ maxWidth: "min(1600px, 92vw)", margin: "0 auto" }}>
+            <h2 style={{ margin: 0, fontSize: "clamp(20px, 2vw, 28px)" }}>
+                Interactive Infinite Ribbon
+            </h2>
+            <p style={{ margin: "6px 0 16px 0", opacity: 0.8 }}>
+                Drag or swipe. Tap a phone to pop it out. Swipe in the modal or use
+                arrows. Tap outside or hit Esc to exit.
+            </p>
+            <InfiniteRibbon
+                key={`speed-${RIBBON_SPEED_PX_PER_SEC}`}
+                images={images}
+            />
+        </div>
+    </section>
 );
 
 export default UserCaseShowCase;
+
+
+
+
+// import React, { useEffect } from "react";
+// import { useSpring, animated } from "@react-spring/web";
+//
+// // ✅ Use your 8 cropped phone images
+// import i1 from "../assets/images_cropped/Iphone1.png";
+// import i2 from "../assets/images_cropped/Iphone2.png";
+// import i3 from "../assets/images_cropped/Iphone3.png";
+// import i4 from "../assets/images_cropped/Iphone4.png";
+// import i5 from "../assets/images_cropped/Iphone5.png";
+// import i6 from "../assets/images_cropped/Iphone6.png";
+// import i7 from "../assets/images_cropped/Iphone7.png";
+// import i8 from "../assets/images_cropped/Iphone8.png";
+//
+// const UserCases: React.FC = () => {
+//     const images = [
+//         { src: i1, name: "Case 1" },
+//         { src: i2, name: "Case 2" },
+//         { src: i3, name: "Case 3" },
+//         { src: i4, name: "Case 4" },
+//         { src: i5, name: "Case 5" },
+//         { src: i6, name: "Case 6" },
+//         { src: i7, name: "Case 7" },
+//         { src: i8, name: "Case 8" },
+//     ];
+//
+//     const len = images.length;
+//     const angle = 360 / len;
+//
+//     // 🔁 Continuous spin using react-spring
+//     const { rotation } = useSpring({
+//         from: { rotation: 0 },
+//         to: async (next) => {
+//             while (true) {
+//                 await next({ rotation: 360 });
+//                 await next({ rotation: 0 });
+//             }
+//         },
+//         config: { duration: 20000 }, // slower = higher number; try 10000 for faster
+//         loop: true,
+//     });
+//
+//     useEffect(() => {
+//         document.title = "User Cases Auto Spin";
+//     }, []);
+//
+//     return (
+//         <section
+//             id="user-cases-section"
+//             style={{
+//                 position: "relative",
+//                 width: "100%",
+//                 overflow: "hidden",
+//                 display: "flex",
+//                 flexDirection: "column",
+//                 justifyContent: "center",
+//                 alignItems: "center",
+//                 padding: "clamp(100px, 10vw, 120px) 0 80px",
+//                 background: "rgba(0, 102, 255, 0.1)",
+//                 color: "white",
+//                 scrollMarginTop: "100px",
+//             }}
+//         >
+//             {/* Title */}
+//             <div
+//                 style={{
+//                     position: "absolute",
+//                     top: "30px",
+//                     left: "10%",
+//                     padding: "4px 16px",
+//                     border: "2px solid white",
+//                     borderRadius: "40px",
+//                     background: "rgba(0, 102, 255, 0.4)",
+//                     color: "white",
+//                     fontSize: "clamp(0.8rem, 1.5vw, 1rem)",
+//                     fontWeight: "400",
+//                     textAlign: "center",
+//                     zIndex: 50,
+//                 }}
+//             >
+//                 User Cases
+//             </div>
+//
+//             {/* Slogan */}
+//             <div style={{ textAlign: "center", marginBottom: "24px", maxWidth: 800 }}>
+//                 <h2
+//                     style={{
+//                         fontSize: "clamp(1.5rem, 2.5vw, 2rem)",
+//                         margin: 0,
+//                         color: "#00D4FF",
+//                     }}
+//                 >
+//                     See Our Solutions in Action
+//                 </h2>
+//                 <p style={{ margin: "8px 0 0 0", color: "#00D4FF" }}>
+//                     Explore how our solutions shine across different scenarios.
+//                 </p>
+//             </div>
+//
+//             {/* Continuous spinning wheel */}
+//             <div
+//                 style={{
+//                     width: "100%",
+//                     maxWidth: 980,
+//                     height: 480,
+//                     perspective: 1400,
+//                     position: "relative",
+//                     overflow: "hidden",
+//                     zIndex: 30,
+//                 }}
+//             >
+//                 <animated.div
+//                     style={{
+//                         width: "100%",
+//                         height: "100%",
+//                         position: "absolute",
+//                         transformStyle: "preserve-3d",
+//                         rotateY: rotation.to((r) => `${r}deg`),
+//                     }}
+//                 >
+//                     {images.map((img, i) => {
+//                         const angleDeg = i * angle;
+//                         return (
+//                             <div
+//                                 key={img.name}
+//                                 style={{
+//                                     position: "absolute",
+//                                     top: "50%",
+//                                     left: "50%",
+//                                     width: "200px",
+//                                     height: "360px",
+//                                     transform: `rotateY(${angleDeg}deg) translateZ(400px)`,
+//                                     transformStyle: "preserve-3d",
+//                                     margin: "-180px -100px",
+//                                     transition: "all 0.55s ease",
+//                                 }}
+//                             >
+//                                 <img
+//                                     src={img.src}
+//                                     alt={img.name}
+//                                     style={{
+//                                         width: "100%",
+//                                         height: "100%",
+//                                         objectFit: "contain",
+//                                         borderRadius: 20,
+//                                         // 👇 removed blue border & background
+//                                         border: "none",
+//                                         boxShadow: "0 8px 22px rgba(0,0,0,0.45)",
+//                                         background: "transparent",
+//                                         display: "block",
+//                                         pointerEvents: "none",
+//                                     }}
+//                                 />
+//                                 <div
+//                                     style={{
+//                                         position: "absolute",
+//                                         bottom: -28,
+//                                         width: "100%",
+//                                         textAlign: "center",
+//                                         color: "white",
+//                                         fontWeight: "700",
+//                                         textShadow: "0 2px 6px rgba(0,0,0,0.5)",
+//                                     }}
+//                                 >
+//                                     {img.name}
+//                                 </div>
+//                             </div>
+//                         );
+//                     })}
+//                 </animated.div>
+//             </div>
+//         </section>
+//     );
+// };
+//
+// export default UserCases;
